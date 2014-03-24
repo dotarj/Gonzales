@@ -1,4 +1,5 @@
-﻿// Copyright (c) Arjen Post. See License.txt in the project root for license information.
+﻿// Copyright (c) Arjen Post. See License.txt in the project root for license information. Credits go to Marc Gravell 
+// for the original idea, which found here https://code.google.com/p/fast-member/, and some parts of the code.
 
 using System;
 using System.Collections.Concurrent;
@@ -95,11 +96,11 @@ namespace Gonzales
     {
         private static readonly ConcurrentDictionary<TypeAccessorOptions, DynamicTypeAccessor> lookups = new ConcurrentDictionary<TypeAccessorOptions, DynamicTypeAccessor>();
 
-        private readonly bool disableInputValidation;
+        private readonly bool disableArgumentValidation;
 
         private DynamicTypeAccessor(TypeAccessorOptions options)
         {
-            disableInputValidation = options.HasFlag(TypeAccessorOptions.DisableInputValidation);
+            disableArgumentValidation = options.HasFlag(TypeAccessorOptions.DisableArgumentValidation);
         }
 
         internal static DynamicTypeAccessor CreateNew(TypeAccessorOptions options)
@@ -107,9 +108,9 @@ namespace Gonzales
             return lookups.GetOrAdd(options, _ => new DynamicTypeAccessor(options));
         }
 
-        private void ValidateObject(object obj)
+        private void ValidateArguments(object obj, string name)
         {
-            if (!disableInputValidation)
+            if (!disableArgumentValidation)
             {
                 if (obj == null)
                 {
@@ -118,14 +119,24 @@ namespace Gonzales
 
                 if (!typeof(IDynamicMetaObjectProvider).IsAssignableFrom(obj.GetType()))
                 {
-                    throw new ArgumentException("Object must be a dynamic type.", "obj");
+                    throw new ArgumentException(Resources.ObjectMustBeDynamic, "obj");
+                }
+
+                if (name == null)
+                {
+                    throw new ArgumentNullException("name", Resources.CannotBeNullOrEmpty);
+                }
+
+                if (name == "")
+                {
+                    throw new ArgumentException(Resources.CannotBeNullOrEmpty, "name");
                 }
             }
         }
 
         private bool HasMember(object obj, string name)
         {
-            if (!disableInputValidation)
+            if (!disableArgumentValidation)
             {
                 var memberNames = ((IDynamicMetaObjectProvider)obj).GetMetaObject(Expression.Constant(obj)).GetDynamicMemberNames();
 
@@ -139,18 +150,18 @@ namespace Gonzales
         {
             get
             {
-                ValidateObject(obj);
+                ValidateArguments(obj, name);
 
                 if (!HasMember(obj, name))
                 {
-                    throw new ArgumentException("Member not found.", name);
+                    throw new ArgumentException(Resources.MemberNotFound, name);
                 }
 
                 return CallSiteCache.GetValue(name, obj);
             }
             set
             {
-                ValidateObject(obj);
+                ValidateArguments(obj, name);
 
                 CallSiteCache.SetValue(name, obj, value);
             }
@@ -158,18 +169,18 @@ namespace Gonzales
 
         public override void SetValue(object obj, string name, object value)
         {
-            ValidateObject(obj);
+            ValidateArguments(obj, name);
 
             CallSiteCache.SetValue(name, obj, value);
         }
 
         public override object GetValue(object obj, string name)
         {
-            ValidateObject(obj);
+            ValidateArguments(obj, name);
 
             if (!HasMember(obj, name))
             {
-                throw new ArgumentException("Member not found.", name);
+                throw new ArgumentException(Resources.MemberNotFound, name);
             }
 
             return CallSiteCache.GetValue(name, obj);
@@ -177,7 +188,7 @@ namespace Gonzales
 
         public override bool TrySetValue(object obj, string name, object value)
         {
-            ValidateObject(obj);
+            ValidateArguments(obj, name);
 
             CallSiteCache.SetValue(name, obj, value);
 
@@ -186,7 +197,7 @@ namespace Gonzales
 
         public override bool TryGetValue(object obj, string name, out object value)
         {
-            ValidateObject(obj);
+            ValidateArguments(obj, name);
 
             if (!HasMember(obj, name))
             {
@@ -214,14 +225,14 @@ namespace Gonzales
         private static int counter;
 
         private readonly Type type;
-        private readonly bool disableInputValidation;
+        private readonly bool disableArgumentValidation;
 
         private GetValueDelegate<object, string, object, bool> getValue;
         private SetValueDelegate<object, string, object, bool> setValue;
 
         static StaticTypeAccessor()
         {
-            var assemblyBuilder = AppDomain.CurrentDomain.DefineDynamicAssembly(new AssemblyName("FastExpression_dynamic"), AssemblyBuilderAccess.Run);
+            var assemblyBuilder = AppDomain.CurrentDomain.DefineDynamicAssembly(new AssemblyName("Gonzales_dynamic"), AssemblyBuilderAccess.Run);
 
             moduleBuilder = assemblyBuilder.DefineDynamicModule("module");
         }
@@ -230,9 +241,9 @@ namespace Gonzales
         {
             this.type = type;
 
-            disableInputValidation = options.HasFlag(TypeAccessorOptions.DisableInputValidation);
+            disableArgumentValidation = options.HasFlag(TypeAccessorOptions.DisableArgumentValidation);
 
-            var typeBuilder = moduleBuilder.DefineType(string.Format("FastExpression_dynamic.{0}_{1}", type.Name, Interlocked.Increment(ref counter)), TypeAttributes.Sealed | TypeAttributes.Public);
+            var typeBuilder = moduleBuilder.DefineType(string.Format("Gonzales_dynamic.{0}_{1}", type.Name, Interlocked.Increment(ref counter)), TypeAttributes.Sealed | TypeAttributes.Public);
 
             GetGetMethods(type, typeBuilder, options);
             GetSetMethods(type, typeBuilder, options);
@@ -250,9 +261,9 @@ namespace Gonzales
             return lookup.GetOrAdd(type, _ => new StaticTypeAccessor(type, options));
         }
 
-        private void ValidateObject(object obj)
+        private void ValidateArguments(object obj, string name)
         {
-            if (!disableInputValidation)
+            if (!disableArgumentValidation)
             {
                 if (obj == null)
                 {
@@ -261,7 +272,7 @@ namespace Gonzales
 
                 if (obj.GetType() != type)
                 {
-                    throw new ArgumentException(string.Format("Object must be of type {0}.", type.Name), "obj");
+                    throw new ArgumentException(string.Format(Resources.ObjectMustBeOfType, type.Name), "obj");
                 }
             }
         }
@@ -270,13 +281,13 @@ namespace Gonzales
         {
             get
             {
-                ValidateObject(obj);
+                ValidateArguments(obj, name);
 
                 object value = null;
 
                 if (!getValue(obj, name, out value))
                 {
-                    throw new ArgumentException("Member not found.", name);
+                    throw new ArgumentException(Resources.MemberNotFound, name);
                 }
 
                 return value;
@@ -284,34 +295,34 @@ namespace Gonzales
             }
             set
             {
-                ValidateObject(obj);
+                ValidateArguments(obj, name);
 
                 if (!setValue(obj, name, value))
                 {
-                    throw new ArgumentException("Member not found.", name);
+                    throw new ArgumentException(Resources.MemberNotFound, name);
                 }
             }
         }
 
         public override void SetValue(object obj, string name, object value)
         {
-            ValidateObject(obj);
+            ValidateArguments(obj, name);
 
             if (!setValue(obj, name, value))
             {
-                throw new ArgumentException("Member not found.", name);
+                throw new ArgumentException(Resources.MemberNotFound, name);
             }
         }
 
         public override object GetValue(object obj, string name)
         {
-            ValidateObject(obj);
+            ValidateArguments(obj, name);
 
             object value = null;
 
             if (!getValue(obj, name, out value))
             {
-                throw new ArgumentException("Member not found.", name);
+                throw new ArgumentException(Resources.MemberNotFound, name);
             }
 
             return value;
@@ -319,14 +330,14 @@ namespace Gonzales
 
         public override bool TrySetValue(object obj, string name, object value)
         {
-            ValidateObject(obj);
+            ValidateArguments(obj, name);
 
             return setValue(obj, name, value);
         }
 
         public override bool TryGetValue(object obj, string name, out object value)
         {
-            ValidateObject(obj);
+            ValidateArguments(obj, name);
 
             return getValue(obj, name, out value);
         }
@@ -479,7 +490,7 @@ namespace Gonzales
                 memberType = property.PropertyType;
             }
 
-            if (options.HasFlag(TypeAccessorOptions.DisableInputValidation))
+            if (options.HasFlag(TypeAccessorOptions.DisableArgumentValidation))
             {
                 return Expression.IfThen(
                     Expression.Equal(Expression.Constant(member.Name), nameExpression),
@@ -495,7 +506,7 @@ namespace Gonzales
                             Expression.IfThen(
                                 Expression.And(Expression.Not(Expression.Equal(valueExpression, Expression.Constant(null))), Expression.Not(Expression.TypeIs(valueExpression, memberType))),
                                 Expression.Throw(Expression.New(argumentExceptionConstructor,
-                                    Expression.Constant(string.Format("Value must be of type {0}", memberType.Name)),
+                                    Expression.Constant(string.Format(Resources.ValueMustBeOfType, memberType.Name)),
                                     Expression.Constant("name")))),
                             expression,
                             Expression.Return(returnTarget, Expression.Constant(true))));

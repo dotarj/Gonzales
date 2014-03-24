@@ -1,4 +1,5 @@
-﻿// Copyright (c) Arjen Post. See License.txt in the project root for license information.
+﻿// Copyright (c) Arjen Post. See License.txt in the project root for license information. Credits go to Marc Gravell 
+// for the original idea, which found here https://code.google.com/p/fast-member/, and some parts of the code.
 
 using Microsoft.CSharp.RuntimeBinder;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
@@ -453,13 +454,41 @@ namespace Gonzales.Test
                 // Arrange
                 dynamic @dynamic = new ExpandoObject();
 
-                var accessor = TypeAccessor.Create(@dynamic.GetType(), TypeAccessorOptions.DisableInputValidation);
+                var accessor = TypeAccessor.Create(@dynamic.GetType(), TypeAccessorOptions.DisableArgumentValidation);
 
                 //Act
                 var a = accessor.GetValue(@dynamic, "A");
 
                 // Assert
                 Assert.AreEqual(123, a);
+            }
+
+            [TestMethod, ExpectedException(typeof(ArgumentNullException))]
+            public void ShouldThrowOnNullMemberNameOnDynamic()
+            {
+                // Arrange
+                dynamic @dynamic = new ExpandoObject();
+
+                @dynamic.A = 123;
+
+                var accessor = TypeAccessor.Create(@dynamic.GetType());
+
+                //Act
+                var a = accessor.GetValue(@dynamic, null);
+            }
+
+            [TestMethod, ExpectedException(typeof(ArgumentException))]
+            public void ShouldThrowOnEmptyMemberNameOnDynamic()
+            {
+                // Arrange
+                dynamic @dynamic = new ExpandoObject();
+
+                @dynamic.A = 123;
+
+                var accessor = TypeAccessor.Create(@dynamic.GetType());
+
+                //Act
+                var a = accessor.GetValue(@dynamic, "");
             }
         }
 
@@ -1221,7 +1250,7 @@ namespace Gonzales.Test
             public void ShouldThrowOnNullObjectWithoutInputValidation()
             {
                 // Arrange
-                var accessor = TypeAccessor.Create(typeof(Class), TypeAccessorOptions.DisableInputValidation);
+                var accessor = TypeAccessor.Create(typeof(Class), TypeAccessorOptions.DisableArgumentValidation);
 
                 //Act
                 accessor[null, "A"] = 123;
@@ -1233,7 +1262,7 @@ namespace Gonzales.Test
                 // Arrange
                 var @struct = new Struct();
 
-                var accessor = TypeAccessor.Create(typeof(Class), TypeAccessorOptions.DisableInputValidation);
+                var accessor = TypeAccessor.Create(typeof(Class), TypeAccessorOptions.DisableArgumentValidation);
 
                 //Act
                 accessor[@struct, "A"] = 123;

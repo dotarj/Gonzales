@@ -1,4 +1,5 @@
-﻿// Copyright (c) Arjen Post. See License.txt in the project root for license information.
+﻿// Copyright (c) Arjen Post. See License.txt in the project root for license information. Credits go to Marc Gravell 
+// for the original idea, which found here https://code.google.com/p/fast-member/, and some parts of the code.
 
 using System;
 
@@ -16,9 +17,9 @@ namespace Gonzales
         None = 0,
 
         /// <summary>
-        /// Specifies that input validation (eg. null/type guards) should be bypassed. Setting this 
+        /// Specifies that argument validation (eg. null/type guards) should be bypassed. Setting this 
         /// option optimizes performance.
         /// </summary>
-        DisableInputValidation = 1
+        DisableArgumentValidation = 1
     }
 }
