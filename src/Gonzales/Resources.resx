@@ -121,13 +121,16 @@
     <value>Value cannot be null or empty.</value>
   </data>
   <data name="MemberNotFound" xml:space="preserve">
-    <value>Member not found.</value>
+    <value>Member {0} not found.</value>
   </data>
   <data name="ObjectMustBeDynamic" xml:space="preserve">
     <value>Object must be a dynamic type.</value>
   </data>
   <data name="ObjectMustBeOfType" xml:space="preserve">
     <value>Object must be of type {0}.</value>
+  </data>
+  <data name="TypeMustBePublic" xml:space="preserve">
+    <value>Type {0} must be public.</value>
   </data>
   <data name="ValueMustBeOfType" xml:space="preserve">
     <value>Value must be of type {0}.</value>

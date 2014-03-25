@@ -70,7 +70,7 @@ namespace Gonzales {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Member not found..
+        ///   Looks up a localized string similar to Member {0} not found..
         /// </summary>
         internal static string MemberNotFound {
             get {
@@ -93,6 +93,15 @@ namespace Gonzales {
         internal static string ObjectMustBeOfType {
             get {
                 return ResourceManager.GetString("ObjectMustBeOfType", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Type {0} must be public..
+        /// </summary>
+        internal static string TypeMustBePublic {
+            get {
+                return ResourceManager.GetString("TypeMustBePublic", resourceCulture);
             }
         }
         

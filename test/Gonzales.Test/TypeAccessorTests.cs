@@ -1275,8 +1275,15 @@ namespace Gonzales.Test
             [TestMethod, ExpectedException(typeof(ArgumentNullException))]
             public void ShouldThrowOnNullType()
             {
-                // Arrange
+                // Act
                 TypeAccessor.Create(null);
+            }
+
+            [TestMethod, ExpectedException(typeof(ArgumentException))]
+            public void ShouldThrowOnNonPublicType()
+            {
+                // Act
+                TypeAccessor.Create(typeof(InternalClass));
             }
         }
     }

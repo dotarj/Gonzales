@@ -341,80 +341,24 @@ namespace Gonzales.Test
             }
         }
 
-
-
-
-
-
-
-
-
-        //[TestClass]
-        //public class TheValidateObjectMethod
-        //{
-        //    [TestMethod, ExpectedException(typeof(ArgumentNullException))]
-        //    public void ShouldThrowOnNullObject()
-        //    {
-        //        // Arrange
-        //        var accessor = ObjectAccessor.Create(typeof(Class));
-
-        //        //Act
-        //        accessor[null, "A"] = 123;
-        //    }
-
-        //    [TestMethod, ExpectedException(typeof(ArgumentException))]
-        //    public void ShouldThrowOnInvalidType()
-        //    {
-        //        // Arrange
-        //        var @struct = new Struct();
-
-        //        var accessor = ObjectAccessor.Create(typeof(Class));
-
-        //        //Act
-        //        accessor[@struct, "A"] = 123;
-        //    }
-
-        //    [TestMethod, ExpectedException(typeof(NullReferenceException))]
-        //    public void ShouldThrowOnNullObjectWithoutInputValidation()
-        //    {
-        //        // Arrange
-        //        var accessor = ObjectAccessor.Create(typeof(Class), TypeAccessorOptions.DisableInputValidation);
-
-        //        //Act
-        //        accessor[null, "A"] = 123;
-        //    }
-
-        //    [TestMethod, ExpectedException(typeof(InvalidCastException))]
-        //    public void ShouldThrowOnInvalidTypeWithoutInputValidation()
-        //    {
-        //        // Arrange
-        //        var @struct = new Struct();
-
-        //        var accessor = ObjectAccessor.Create(typeof(Class), TypeAccessorOptions.DisableInputValidation);
-
-        //        //Act
-        //        accessor[@struct, "A"] = 123;
-        //    }
-        //}
-
-
-
-
-
-
-
-
-
-
-
         [TestClass]
         public class TheCreateMethod
         {
             [TestMethod, ExpectedException(typeof(ArgumentNullException))]
             public void ShouldThrowOnNullType()
             {
-                // Arrange
+                // Act
                 ObjectAccessor.Create(null);
+            }
+
+            [TestMethod, ExpectedException(typeof(ArgumentException))]
+            public void ShouldThrowOnNonPublicType()
+            {
+                // Arrange
+                var internalClass = new InternalClass();
+
+                // Act
+                ObjectAccessor.Create(internalClass);
             }
         }
     }

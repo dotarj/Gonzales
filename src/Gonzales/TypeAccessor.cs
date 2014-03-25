@@ -41,6 +41,11 @@ namespace Gonzales
                 throw new ArgumentNullException("type");
             }
 
+            if (!type.IsPublic)
+            {
+                throw new ArgumentException(string.Format(Resources.TypeMustBePublic, type.FullName), "type");
+            }
+
             if (typeof(IDynamicMetaObjectProvider).IsAssignableFrom(type))
             {
                 return DynamicTypeAccessor.CreateNew(options);
@@ -154,7 +159,7 @@ namespace Gonzales
 
                 if (!HasMember(obj, name))
                 {
-                    throw new ArgumentException(Resources.MemberNotFound, name);
+                    throw new ArgumentException(string.Format(Resources.MemberNotFound, name), "name");
                 }
 
                 return CallSiteCache.GetValue(name, obj);
@@ -180,7 +185,7 @@ namespace Gonzales
 
             if (!HasMember(obj, name))
             {
-                throw new ArgumentException(Resources.MemberNotFound, name);
+                throw new ArgumentException(string.Format(Resources.MemberNotFound, name), "name");
             }
 
             return CallSiteCache.GetValue(name, obj);
@@ -287,7 +292,7 @@ namespace Gonzales
 
                 if (!getValue(obj, name, out value))
                 {
-                    throw new ArgumentException(Resources.MemberNotFound, name);
+                    throw new ArgumentException(string.Format(Resources.MemberNotFound, name), "name");
                 }
 
                 return value;
@@ -299,7 +304,7 @@ namespace Gonzales
 
                 if (!setValue(obj, name, value))
                 {
-                    throw new ArgumentException(Resources.MemberNotFound, name);
+                    throw new ArgumentException(string.Format(Resources.MemberNotFound, name), "name");
                 }
             }
         }
@@ -310,7 +315,7 @@ namespace Gonzales
 
             if (!setValue(obj, name, value))
             {
-                throw new ArgumentException(Resources.MemberNotFound, name);
+                throw new ArgumentException(string.Format(Resources.MemberNotFound, name), "name");
             }
         }
 
@@ -322,7 +327,7 @@ namespace Gonzales
 
             if (!getValue(obj, name, out value))
             {
-                throw new ArgumentException(Resources.MemberNotFound, name);
+                throw new ArgumentException(string.Format(Resources.MemberNotFound, name), "name");
             }
 
             return value;

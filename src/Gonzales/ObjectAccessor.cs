@@ -34,6 +34,13 @@ namespace Gonzales
                 throw new ArgumentNullException("obj");
             }
 
+            var type = obj.GetType();
+
+            if (!type.IsPublic)
+            {
+                throw new ArgumentException(string.Format(Resources.TypeMustBePublic, type.FullName), "type");
+            }
+
             var dynamicMetaObjectProvider = obj as IDynamicMetaObjectProvider;
 
             if (dynamicMetaObjectProvider != null)
