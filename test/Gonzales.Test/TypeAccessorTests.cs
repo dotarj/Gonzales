@@ -1271,7 +1271,7 @@ namespace Gonzales.Test
         }
 
         [TestClass]
-        public class TheCreateMethod
+        public class TheStaticCreateMethod
         {
             [TestMethod, ExpectedException(typeof(ArgumentNullException))]
             public void ShouldThrowOnNullType()
@@ -1373,6 +1373,101 @@ namespace Gonzales.Test
 
                 // Assert
                 Assert.IsFalse(accessor.GetMemberNamesSupported);
+            }
+        }
+
+        [TestClass]
+        public class TheCreateMethod
+        {
+            [TestMethod]
+            public void ShouldCreateANewInstanceOnAClass()
+            {
+                // Arrange
+                var accessor = TypeAccessor.Create(typeof(Class));
+
+                // Act
+                var @class = accessor.Create();
+
+                // Assert
+                Assert.IsNotNull(@class);
+            }
+
+            [TestMethod, ExpectedException(typeof(NotSupportedException))]
+            public void ShouldThrowOnDynamic()
+            {
+                // Arrange
+                dynamic @dynamic = new ExpandoObject();
+
+                var accessor = TypeAccessor.Create(@dynamic.GetType());
+
+                // Act
+                accessor.Create();
+            }
+
+            [TestMethod, ExpectedException(typeof(NotSupportedException))]
+            public void ShouldThrowOnPrivateConstructorOnClass()
+            {
+                // Arrange
+                var accessor = TypeAccessor.Create(typeof(ClassWithPrivateConstructor));
+
+                // Act
+                accessor.Create();
+            }
+
+            [TestMethod, ExpectedException(typeof(NotSupportedException))]
+            public void ShouldThrowOnConstructorWithParametersOnClass()
+            {
+                // Arrange
+                var accessor = TypeAccessor.Create(typeof(ClassWithConstructorWithParameters));
+
+                // Act
+                accessor.Create();
+            }
+        }
+
+        [TestClass]
+        public class TheCreatedSupportedProperty
+        {
+            [TestMethod]
+            public void ShouldReturnTrueOnClass()
+            {
+                // Arrange
+                var accessor = TypeAccessor.Create(typeof(Class));
+
+                // Assert
+                Assert.IsTrue(accessor.CreateSupported);
+            }
+
+            [TestMethod]
+            public void ShouldReturnFalseOnDynamic()
+            {
+                // Arrange
+                dynamic @dynamic = new ExpandoObject();
+
+                var accessor = TypeAccessor.Create(@dynamic.GetType());
+
+                // Assert
+                Assert.IsFalse(accessor.CreateSupported);
+            }
+
+            [TestMethod]
+            public void ShouldReturnFalseOnPrivateConstructorOnClass()
+            {
+                // Arrange
+                var accessor = TypeAccessor.Create(typeof(ClassWithPrivateConstructor));
+
+                // Assert
+                Assert.IsFalse(accessor.CreateSupported);
+            }
+
+            [TestMethod]
+            public void ShouldReturnFalseOnConstructorWithParametersOnClass()
+            {
+                // Arrange
+                var accessor = TypeAccessor.Create(typeof(ClassWithConstructorWithParameters));
+
+                // Assert
+                Assert.IsFalse(accessor.CreateSupported);
             }
         }
     }

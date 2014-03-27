@@ -52,6 +52,8 @@
   </Choose>
   <ItemGroup>
     <Compile Include="Class.cs" />
+    <Compile Include="ClassWithPrivateConstructor.cs" />
+    <Compile Include="ClassWithConstructorWithParameters.cs" />
     <Compile Include="InternalClass.cs" />
     <Compile Include="ObjectAccessorTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

@@ -6,7 +6,10 @@ using System.Diagnostics.CodeAnalysis;
 namespace Gonzales.Test
 {
     [ExcludeFromCodeCoverage]
-    internal class InternalClass
+    public class ClassWithPrivateConstructor
     {
+        private ClassWithPrivateConstructor()
+        {
+        }
     }
 }

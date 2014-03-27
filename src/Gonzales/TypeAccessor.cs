@@ -110,6 +110,10 @@ namespace Gonzales
         /// Gets a list of writeable member names.
         /// </summary>
         public abstract IReadOnlyCollection<string> GetWriteableMemberNames();
+
+        public abstract bool CreateSupported { get; }
+
+        public abstract object Create();
     }
 
     sealed class DynamicTypeAccessor : TypeAccessor
@@ -245,6 +249,13 @@ namespace Gonzales
         {
             throw new NotSupportedException();
         }
+
+        public override bool CreateSupported { get { return false; } }
+
+        public override object Create()
+        {
+            throw new NotSupportedException();
+        }
     }
 
     sealed class StaticTypeAccessor : TypeAccessor
@@ -261,6 +272,7 @@ namespace Gonzales
 
         private readonly Type type;
         private readonly bool disableArgumentValidation;
+        private readonly Func<object> create;
         
         private IReadOnlyCollection<string> readableMemberNames;
         private IReadOnlyCollection<string> writeableMemberNames;
@@ -286,10 +298,35 @@ namespace Gonzales
             GetGetMethods(type, typeBuilder, options);
             GetSetMethods(type, typeBuilder, options);
 
+            GetCreateMethod(type, typeBuilder);
+
             var accessorType = typeBuilder.CreateType();
 
             getValue = (GetValueDelegate<object, string, object, bool>)Delegate.CreateDelegate(typeof(GetValueDelegate<object, string, object, bool>), accessorType.GetMethod(string.Format("get_{0}_{1}", type.Name, (long)options)));
             setValue = (SetValueDelegate<object, string, object, bool>)Delegate.CreateDelegate(typeof(SetValueDelegate<object, string, object, bool>), accessorType.GetMethod(string.Format("set_{0}_{1}", type.Name, (long)options)));
+
+            var createMethodInfo = accessorType.GetMethod(string.Format("ctor_{0}", type.Name));
+
+            if(createMethodInfo != null)
+            {
+                create = (Func<object>)Delegate.CreateDelegate(typeof(Func<object>), createMethodInfo); 
+            }
+        }
+
+        private void GetCreateMethod(Type type, TypeBuilder typeBuilder)
+        {
+            var constructorInfo = type.GetConstructor(new Type[0]);
+
+            if (constructorInfo != null)
+            {
+                var newExpression = Expression.New(constructorInfo);
+                var lambdaExpression = Expression.Lambda<Func<object>>(newExpression);
+
+                var methodName = string.Format("ctor_{0}", type.Name);
+                var methodBuilder = typeBuilder.DefineMethod(methodName, MethodAttributes.Public | MethodAttributes.Static);
+                
+                lambdaExpression.CompileToMethod(methodBuilder);
+            }
         }
 
         internal static StaticTypeAccessor CreateNew(Type type, TypeAccessorOptions options)
@@ -406,6 +443,18 @@ namespace Gonzales
             }
 
             return writeableMemberNames;
+        }
+
+        public override bool CreateSupported { get { return create != null; } }
+
+        public override object Create()
+        {
+            if (create == null)
+            {
+                throw new NotSupportedException(); // TODO: Message
+            }
+
+            return create();
         }
 
         private void GetGetMethods(Type type, TypeBuilder typeBuilder, TypeAccessorOptions options)
