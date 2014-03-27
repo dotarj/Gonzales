@@ -95,6 +95,21 @@ namespace Gonzales
         /// <param name="value">The member value of the specified object.</param>
         /// <returns>True if successful; otherwise, false.</returns>
         public abstract bool TryGetValue(object obj, string name, out object value);
+
+        /// <summary>
+        /// Gets a value indicating whether member names can be retrieved.
+        /// </summary>
+        public abstract bool GetMemberNamesSupported { get; }
+
+        /// <summary>
+        /// Gets a list of readable member names.
+        /// </summary>
+        public abstract IReadOnlyCollection<string> GetReadableMemberNames();
+
+        /// <summary>
+        /// Gets a list of writeable member names.
+        /// </summary>
+        public abstract IReadOnlyCollection<string> GetWriteableMemberNames();
     }
 
     sealed class DynamicTypeAccessor : TypeAccessor
@@ -143,12 +158,15 @@ namespace Gonzales
         {
             if (!disableArgumentValidation)
             {
-                var memberNames = ((IDynamicMetaObjectProvider)obj).GetMetaObject(Expression.Constant(obj)).GetDynamicMemberNames();
-
-                return memberNames.Contains(name);
+                return GetMemberNames((IDynamicMetaObjectProvider)obj).Contains(name);
             }
 
             return true;
+        }
+
+        private IEnumerable<string> GetMemberNames(IDynamicMetaObjectProvider dynamicMetaObjectProvider)
+        {
+            return dynamicMetaObjectProvider.GetMetaObject(Expression.Constant(dynamicMetaObjectProvider)).GetDynamicMemberNames();
         }
 
         public override object this[object obj, string name]
@@ -215,6 +233,18 @@ namespace Gonzales
 
             return true;
         }
+
+        public override bool GetMemberNamesSupported { get { return false; } }
+
+        public override IReadOnlyCollection<string> GetReadableMemberNames()
+        {
+            throw new NotSupportedException();
+        }
+
+        public override IReadOnlyCollection<string> GetWriteableMemberNames()
+        {
+            throw new NotSupportedException();
+        }
     }
 
     sealed class StaticTypeAccessor : TypeAccessor
@@ -231,6 +261,9 @@ namespace Gonzales
 
         private readonly Type type;
         private readonly bool disableArgumentValidation;
+        
+        private IReadOnlyCollection<string> readableMemberNames;
+        private IReadOnlyCollection<string> writeableMemberNames;
 
         private GetValueDelegate<object, string, object, bool> getValue;
         private SetValueDelegate<object, string, object, bool> setValue;
@@ -347,7 +380,35 @@ namespace Gonzales
             return getValue(obj, name, out value);
         }
 
-        private static void GetGetMethods(Type type, TypeBuilder typeBuilder, TypeAccessorOptions options)
+        public override bool GetMemberNamesSupported { get { return true; } }
+
+        public override IReadOnlyCollection<string> GetReadableMemberNames()
+        {
+            if (readableMemberNames == null)
+            {
+                readableMemberNames = GetReadableMembers(type)
+                    .Select(memberInfo => memberInfo.Name)
+                    .ToList()
+                    .AsReadOnly();
+            }
+
+            return readableMemberNames;
+        }
+
+        public override IReadOnlyCollection<string> GetWriteableMemberNames()
+        {
+            if (writeableMemberNames == null)
+            {
+                writeableMemberNames = GetWriteableMembers(type)
+                    .Select(memberInfo => memberInfo.Name)
+                    .ToList()
+                    .AsReadOnly();
+            }
+
+            return writeableMemberNames;
+        }
+
+        private void GetGetMethods(Type type, TypeBuilder typeBuilder, TypeAccessorOptions options)
         {
             var sourceExpression = Expression.Parameter(typeof(object), "source");
             var nameExpression = Expression.Parameter(typeof(string), "name");
@@ -390,7 +451,7 @@ namespace Gonzales
             expression.CompileToMethod(methodBuilder);
         }
 
-        private static MemberInfo[] GetReadableMembers(Type type)
+        private MemberInfo[] GetReadableMembers(Type type)
         {
             return type
                 .GetProperties(BindingFlags.Public | BindingFlags.Instance)
@@ -400,7 +461,7 @@ namespace Gonzales
                 .ToArray();
         }
 
-        private static ConditionalExpression GetGetExpressions(Type type, ParameterExpression sourceExpression, ParameterExpression nameExpression, ParameterExpression valueExpression, LabelTarget returnTarget, MemberInfo member)
+        private ConditionalExpression GetGetExpressions(Type type, ParameterExpression sourceExpression, ParameterExpression nameExpression, ParameterExpression valueExpression, LabelTarget returnTarget, MemberInfo member)
         {
             Expression expression;
 
@@ -424,7 +485,7 @@ namespace Gonzales
                     Expression.Return(returnTarget, Expression.Constant(true))));
         }
 
-        private static void GetSetMethods(Type type, TypeBuilder typeBuilder, TypeAccessorOptions options)
+        private void GetSetMethods(Type type, TypeBuilder typeBuilder, TypeAccessorOptions options)
         {
             var targetExpression = Expression.Parameter(typeof(object), "target");
             var nameExpression = Expression.Parameter(typeof(string), "name");
@@ -465,7 +526,7 @@ namespace Gonzales
             expression.CompileToMethod(methodBuilder);
         }
 
-        private static MemberInfo[] GetWriteableMembers(Type type)
+        private MemberInfo[] GetWriteableMembers(Type type)
         {
             return type
                 .GetProperties(BindingFlags.Public | BindingFlags.Instance)
@@ -475,7 +536,7 @@ namespace Gonzales
                 .ToArray();
         }
 
-        private static ConditionalExpression GetSetExpressions(Type type, ParameterExpression targetExpression, ParameterExpression nameExpression, ParameterExpression valueExpression, LabelTarget returnTarget, MemberInfo member, TypeAccessorOptions options)
+        private ConditionalExpression GetSetExpressions(Type type, ParameterExpression targetExpression, ParameterExpression nameExpression, ParameterExpression valueExpression, LabelTarget returnTarget, MemberInfo member, TypeAccessorOptions options)
         {
             Expression expression;
             Type memberType;

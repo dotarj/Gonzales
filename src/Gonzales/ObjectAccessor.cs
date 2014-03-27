@@ -2,6 +2,7 @@
 // for the original idea, which found here https://code.google.com/p/fast-member/, and some parts of the code.
 
 using System;
+using System.Collections.Generic;
 using System.Dynamic;
 
 namespace Gonzales
@@ -88,6 +89,21 @@ namespace Gonzales
         /// <returns>True if successful; otherwise, false.</returns>
         public abstract bool TryGetValue(string name, out object value);
 
+        /// <summary>
+        /// Gets a value indicating whether member names can be retrieved.
+        /// </summary>
+        public abstract bool GetMemberNamesSupported { get; }
+
+        /// <summary>
+        /// Gets a list of readable member names.
+        /// </summary>
+        public abstract IReadOnlyCollection<string> GetReadableMemberNames();
+
+        /// <summary>
+        /// Gets a list of writeable member names.
+        /// </summary>
+        public abstract IReadOnlyCollection<string> GetWriteableMemberNames();
+
         sealed class DynamicObjectAccessor : ObjectAccessor
         {
             private readonly IDynamicMetaObjectProvider obj;
@@ -125,6 +141,18 @@ namespace Gonzales
                 value = CallSiteCache.GetValue(name, obj);
 
                 return true;
+            }
+
+            public override bool GetMemberNamesSupported { get { return false; } }
+
+            public override IReadOnlyCollection<string> GetReadableMemberNames()
+            {
+                throw new NotSupportedException();
+            }
+
+            public override IReadOnlyCollection<string> GetWriteableMemberNames()
+            {
+                throw new NotSupportedException();
             }
         }
 
@@ -167,6 +195,18 @@ namespace Gonzales
             public override bool TryGetValue(string name, out object value)
             {
                 return typeAccessor.TryGetValue(obj, name, out value);
+            }
+
+            public override bool GetMemberNamesSupported { get { return true; } }
+
+            public override IReadOnlyCollection<string> GetReadableMemberNames()
+            {
+                return typeAccessor.GetReadableMemberNames();
+            }
+
+            public override IReadOnlyCollection<string> GetWriteableMemberNames()
+            {
+                return typeAccessor.GetWriteableMemberNames();
             }
         }
     }

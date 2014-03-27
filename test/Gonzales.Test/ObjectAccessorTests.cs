@@ -5,6 +5,7 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
 using System.Diagnostics.CodeAnalysis;
 using System.Dynamic;
+using System.Linq;
 
 namespace Gonzales.Test
 {
@@ -359,6 +360,100 @@ namespace Gonzales.Test
 
                 // Act
                 ObjectAccessor.Create(internalClass);
+            }
+        }
+
+        [TestClass]
+        public class TheGetReadableMemberNamesMethod
+        {
+            [TestMethod]
+            public void ShouldReturnReadableMemberNamesOnClass()
+            {
+                // Arrange
+                var @class = new Class();
+
+                var accessor = ObjectAccessor.Create(@class);
+
+                // Act
+                var memberNames = accessor.GetReadableMemberNames();
+
+                // Assert
+                Assert.IsFalse(memberNames
+                    .Except(new[] { "A", "AA", "B", "C", "D", "E", "EE", "F", "G", "H", "J" })
+                    .Any());
+            }
+
+            [TestMethod, ExpectedException(typeof(NotSupportedException))]
+            public void ShouldThrowOnDynamic()
+            {
+                // Arrange
+                dynamic @dynamic = new ExpandoObject();
+
+                var accessor = ObjectAccessor.Create(@dynamic);
+
+                // Act
+                var memberNames = accessor.GetReadableMemberNames();
+            }
+        }
+
+        [TestClass]
+        public class TheGetWriteableMemberNamesMethod
+        {
+            [TestMethod]
+            public void ShouldReturnWriteableMemberNamesOnClass()
+            {
+                // Arrange
+                var @class = new Class();
+
+                var accessor = ObjectAccessor.Create(@class);
+
+                // Act
+                var memberNames = accessor.GetWriteableMemberNames();
+
+                // Assert
+                Assert.IsFalse(memberNames
+                    .Except(new[] { "A", "AA", "B", "C", "D", "E", "EE", "F", "G", "H", "K" })
+                    .Any());
+            }
+
+            [TestMethod, ExpectedException(typeof(NotSupportedException))]
+            public void ShouldThrowOnDynamic()
+            {
+                // Arrange
+                dynamic @dynamic = new ExpandoObject();
+
+                var accessor = ObjectAccessor.Create(@dynamic);
+
+                // Act
+                var memberNames = accessor.GetWriteableMemberNames();
+            }
+        }
+
+        [TestClass]
+        public class TheGetMemberNamesSupportedProperty
+        {
+            [TestMethod]
+            public void ShouldReturnTrueOnClass()
+            {
+                // Arrange
+                var @class = new Class();
+
+                var accessor = ObjectAccessor.Create(@class);
+
+                // Assert
+                Assert.IsTrue(accessor.GetMemberNamesSupported);
+            }
+
+            [TestMethod]
+            public void ShouldThrowOnDynamic()
+            {
+                // Arrange
+                dynamic @dynamic = new ExpandoObject();
+
+                var accessor = ObjectAccessor.Create(@dynamic);
+
+                // Assert
+                Assert.IsFalse(accessor.GetMemberNamesSupported);
             }
         }
     }
