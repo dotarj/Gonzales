@@ -120,6 +120,9 @@
   <data name="CannotBeNullOrEmpty" xml:space="preserve">
     <value>Value cannot be null or empty.</value>
   </data>
+  <data name="CreateNotSupported" xml:space="preserve">
+    <value>Create not supported for type {0}.</value>
+  </data>
   <data name="MemberNotFound" xml:space="preserve">
     <value>Member {0} not found.</value>
   </data>

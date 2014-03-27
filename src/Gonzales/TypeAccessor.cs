@@ -266,19 +266,18 @@ namespace Gonzales
         private static readonly ConcurrentDictionary<TypeAccessorOptions, ConcurrentDictionary<Type, StaticTypeAccessor>> lookups = new ConcurrentDictionary<TypeAccessorOptions,ConcurrentDictionary<Type,StaticTypeAccessor>>();
         private static readonly MethodInfo stringIndexerMethod = typeof(string).GetMethod("get_Chars");
         private static readonly ConstructorInfo argumentExceptionConstructor = typeof(ArgumentException).GetConstructor(new[] { typeof(string), typeof(string) });
+        private static readonly ModuleBuilder moduleBuilder;
 
-        private static ModuleBuilder moduleBuilder;
         private static int counter;
 
         private readonly Type type;
         private readonly bool disableArgumentValidation;
         private readonly Func<object> create;
+        private readonly GetValueDelegate<object, string, object, bool> getValue;
+        private readonly SetValueDelegate<object, string, object, bool> setValue;
         
         private IReadOnlyCollection<string> readableMemberNames;
         private IReadOnlyCollection<string> writeableMemberNames;
-
-        private GetValueDelegate<object, string, object, bool> getValue;
-        private SetValueDelegate<object, string, object, bool> setValue;
 
         static StaticTypeAccessor()
         {
@@ -348,6 +347,16 @@ namespace Gonzales
                 if (obj.GetType() != type)
                 {
                     throw new ArgumentException(string.Format(Resources.ObjectMustBeOfType, type.Name), "obj");
+                }
+
+                if (name == null)
+                {
+                    throw new ArgumentNullException("name", Resources.CannotBeNullOrEmpty);
+                }
+
+                if (name == "")
+                {
+                    throw new ArgumentException(Resources.CannotBeNullOrEmpty, "name");
                 }
             }
         }
@@ -451,7 +460,7 @@ namespace Gonzales
         {
             if (create == null)
             {
-                throw new NotSupportedException(); // TODO: Message
+                throw new NotSupportedException(string.Format(Resources.CreateNotSupported, type.Name));
             }
 
             return create();

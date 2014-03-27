@@ -70,6 +70,15 @@ namespace Gonzales {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Create not supported for type {0}..
+        /// </summary>
+        internal static string CreateNotSupported {
+            get {
+                return ResourceManager.GetString("CreateNotSupported", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Member {0} not found..
         /// </summary>
         internal static string MemberNotFound {

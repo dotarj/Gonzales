@@ -1199,7 +1199,7 @@ namespace Gonzales.Test
         }
 
         [TestClass]
-        public class TheValidateObjectMethod
+        public class TheValidateArgumentsMethod
         {
             [TestMethod, ExpectedException(typeof(ArgumentNullException))]
             public void ShouldThrowOnNullObject()
@@ -1209,6 +1209,30 @@ namespace Gonzales.Test
 
                 //Act
                 accessor[null, "A"] = 123;
+            }
+
+            [TestMethod, ExpectedException(typeof(ArgumentNullException))]
+            public void ShouldThrowOnNullName()
+            {
+                // Arrange
+                var @class = new Class();
+
+                var accessor = TypeAccessor.Create(typeof(Class));
+
+                //Act
+                accessor[@class, null] = 123;
+            }
+
+            [TestMethod, ExpectedException(typeof(ArgumentException))]
+            public void ShouldThrowOnEmptyName()
+            {
+                // Arrange
+                var @class = new Class();
+
+                var accessor = TypeAccessor.Create(typeof(Class));
+
+                //Act
+                accessor[@class, ""] = 123;
             }
 
             [TestMethod, ExpectedException(typeof(ArgumentNullException))]
